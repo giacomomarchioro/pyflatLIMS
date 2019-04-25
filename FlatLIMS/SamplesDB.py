@@ -1,13 +1,14 @@
 import csv
 import os
-import pandas as pd
 import sys
 benc = 'w'
 aenc = 'a'
+renc = 'r'
 # This if for compatibility with python 2.7
 if sys.version_info[0] < 3:
     benc = 'wb'
     aenc = 'ab'
+    renc = 'rb'
 
 
 class SamplesDB:
@@ -64,13 +65,16 @@ class SamplesDB:
           > it checks if the uniqueness
         '''
         def getIDs():
-            ids = pd.read_csv(self.path_csv).as_matrix()[:,0]
+            with open(self.path_csv,renc) as f :
+                next(f) # Skip the header
+                ids = [int(i.split(',')[0]) for i in f ]
+            #ids = pd.read_csv(self.path_csv).as_matrix()[:,0]
             IDset = set(ids)
             return ids, IDset
 
         ids, IDset = getIDs()
 
-        if ids.shape == ():
+        if ids == []:
             return ids
 
         if len(ids) != len(IDset):
@@ -106,17 +110,16 @@ class SamplesDB:
         '2':'FSE Microscopia','4':'Tesi Giacomo','5':'SUPSI'}
         dataset = {'0':'Silvers','1':'Bronzes','2':'Coins','3':'SanRocco'}
         multiplechoice = {'Project':project,'Status':status,'Creator':actors,'Owner':actors,'Dataset':dataset}
-
-        import numpy as np
         ids = self.check_integrity()
-
-        if ids.shape == (0,):
+        
+        # If it's the first element the ID will be 1.
+        if ids == []:
             newid = 1
 
         else:
-            newid = np.max(ids) + 1
+            newid = max(ids) + 1
 
-        #This is the array where all the fields will be stored
+        # This is the array where all the fields will be stored-
         fields = [newid]
 
         def dictchoose(dictionary):
@@ -151,9 +154,9 @@ class SamplesDB:
         samplehist = os.path.join(self.path_histDB,'%s.txt'%(newid))
         sampleimgfold = os.path.join(self.path_imagesDB,str(newid))
         with open(samplehist,benc) as t:
-            t.write('#PREPARATION: \n')
+            t.write('Preparation: \n')
             preparation = input('Preparation: ')
-            t.writelines(preparation)
+            t.writelines('\t' + preparation)
         os.makedirs(sampleimgfold)
         answ_img=input('Do you want to add image from webcam? y/n ')
         if answ_img.lower() == 'y':
@@ -253,7 +256,7 @@ class SamplesDB:
 
         # Ramp the camera - these frames will be discarded and are only used to allow v4l2
         # to adjust light levels, if necessary
-        for i in xrange(ramp_frames):
+        for i in range(ramp_frames):
             temp = get_image()
         print("Taking image...")
         # Take the actual image we want to keep
