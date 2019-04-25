@@ -1,9 +1,13 @@
 import csv
 import os
 import pandas as pd
-from __future__ import print_function
-if hasattr(__builtins__, 'input'):
-    input = input
+import sys
+benc = 'w'
+aenc = 'a'
+# This if for compatibility with python 2.7
+if sys.version_info[0] < 3:
+    benc = 'wb'
+    aenc = 'ab'
 
 
 class SamplesDB:
@@ -15,7 +19,7 @@ class SamplesDB:
         self.header=['id','Status','Name','Label','Project','Dataset',
                     'Description','Materials','Width','Height ','Depth',
                     'Weight','Location','Creator','Owner']
-        self._autocommit=False
+        self._autocommit = False
         self.camera_port = 1
         self.path_labDB = os.path.join(self.path,'LabDatabase')
         self.path_samplesDB = os.path.join(self.path_labDB,'SamplesDB')
@@ -44,12 +48,12 @@ class SamplesDB:
 
 
         if not os.path.exists(self.path_csv):
-            with open(self.path_csv, 'wb') as f:
+            with open(self.path_csv, benc) as f:
                 writer = csv.writer(f)
                 writer.writerow(self.header)
 
         if not os.path.exists(self.path_config):
-            with open(self.path_config, 'wb') as f:
+            with open(self.path_config, benc) as f:
                 f.write('DEFAULT CAMERA COM: %s')
                 f.write('GIT AUTO COMMIT: %s' %(inizializeGIT))
 
@@ -133,7 +137,7 @@ class SamplesDB:
                 fields.append(input('%s : ' %(i)) )
 
 
-        with open(self.path_csv, 'ab') as f:
+        with open(self.path_csv, aenc) as f:
             writer = csv.writer(f)
             writer.writerow(fields)
 
@@ -143,22 +147,17 @@ class SamplesDB:
                %(fields[2],self.path,newid))
 
     def create_hist_imgfolder(self,newid):
-         #Inizialize the sample creating image folder and history txt
-         samplehist = os.path.join(self.path_histDB,'%s.txt'%(newid))
-         sampleimgfold = os.path.join(self.path_imagesDB,str(newid))
-
-
-
-        with open(samplehist,'w') as t:
+        #Inizialize the sample creating image folder and history txt
+        samplehist = os.path.join(self.path_histDB,'%s.txt'%(newid))
+        sampleimgfold = os.path.join(self.path_imagesDB,str(newid))
+        with open(samplehist,benc) as t:
             t.write('#PREPARATION: \n')
             preparation = input('Preparation: ')
             t.writelines(preparation)
-
         os.makedirs(sampleimgfold)
-
         answ_img=input('Do you want to add image from webcam? y/n ')
         if answ_img.lower() == 'y':
-           self.add_photo_to_sample(newid)
+            self.add_photo_to_sample(newid)
         else:
             pass
 
@@ -172,7 +171,7 @@ class SamplesDB:
         import shutil
         answ = input('Are you sure you want to delete sample %s linked files? y/n' %(ID))
         if answ.lower() == 'y':
-            os.remove(os.path.join(self.path_histDB,'%s.txt'%(ID))
+            os.remove(os.path.join(self.path_histDB,'%s.txt'%(ID)))
             shutil.rmtree(os.path.join(self.path_imagesDB,str(ID)),
                           ignore_errors=False, onerror=None)
 
